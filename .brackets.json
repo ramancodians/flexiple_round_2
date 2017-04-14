@@ -1,0 +1,15 @@
+{
+    "path": {
+        "public/*.scss": {
+            "sass.enabled": true,
+            "sass.options": {
+                "outputDir": "./",
+                "includePaths": [],
+                "sourceComments": "map",
+                "outputStyle": "compressed"
+            },
+            "custom.work.toggleToolbar": true,
+            "linting.collapsed": true
+        }
+    }
+}
