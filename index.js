@@ -37,12 +37,15 @@ app.get('/',(req,res)=>{
 app.post('/',(req,res)=>{
     var format = /[!@#$%^&*()+\-=\[\]{};':"\\|,.<>\/?]+|\d+/;
     var emailFormat = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.in$/;
-    var error = []
+    var specialChars = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/gi;
+    var error = [];
+    
     if(format.test(req.body.full_name)){
         error.push({
             msg : "Fullname not formatted correctly"
         });
     }
+    
     if(req.body.password != req.body.password_confirm){
          error.push({
             msg : "Password don't match"
@@ -61,6 +64,11 @@ app.post('/',(req,res)=>{
         });
     }
     
+    if((req.body.password && req.body.password.replace(/[^A-Z]/g, "").length != 2) || req.body.password.match(specialChars) == null || req.body.password.match(specialChars).length != 2 ){
+         error.push({
+            msg : "Password must contain exactly 2 special characters and 2 uppercase letters"
+        });
+    }
     
     if(error.length > 0){
         res.render('login', {
@@ -69,11 +77,17 @@ app.post('/',(req,res)=>{
             loginError : false
         });
     }else{
-        addUser(req.body,(err)=>{
+        var payload = {
+            full_name : "flexiple_"+req.body.full_name.toLowerCase(),
+            email : req.body.email,
+            password : req.body.password
+        }
+        addUser(payload,(err)=>{
             if(err){
                 console.log('Error while adding users');
             }else{
                 req.session.isLogged = true;
+                req.session.email = req.body.email;
                 res.redirect('/home');
             }
         });
@@ -81,22 +95,21 @@ app.post('/',(req,res)=>{
 });
 
 app.get('/home',(req,res)=>{
-    
-    getUserdata(function(req.session.email){
-        res.render('logged', {});
-    })
-    
-    res.send('sadasd')
-    
+    if(!req.session.email){
+       res.redirect('/');
+    }else{
+        var email = req.session.email;
+        getUserData(email,function(userData){
+            res.render('logged', {
+                userData : userData
+            });
+        });
+    }
 });
 
 app.get('/logout',(req,res)=>{
    delete req.session.isLogged;
-     res.render('login', {
-            error : null,
-            body : {},
-            loginError : false,
-        });
+   res.redirect('/');
 });
 
 app.post('/auth',(req,res)=>{
@@ -105,6 +118,7 @@ app.post('/auth',(req,res)=>{
    });
     if(user){
         req.session.isLogged = true;
+        req.session.email = req.body.email;
         res.redirect('/home');
     }else{
          res.render('login', {
@@ -129,6 +143,12 @@ function addUser(userData,cb){
    });
 }
 
-function getUserData(email){
-    console.log('find this user -> ' + email)
+function getUserData(email,cb){
+    var user = dbData.users.find((user)=>{
+       return email == user.email ? user : false;
+   });
+   if(user){
+       console.log('founder user -> ',user);
+       cb(user);
+   }
 }

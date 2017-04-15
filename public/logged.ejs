@@ -16,8 +16,12 @@
     
     <div class="container">
         <div class="card-wrap">
-            <h1>Welcome, <></h1>
+            <h1>Welcome, <%=userData.full_name%></h1>
         </div>
+        <pre>
+// JSON Stored Internally. 
+<%=JSON.stringify(userData,null,4)%>
+        </pre>
         
     </div>
     
